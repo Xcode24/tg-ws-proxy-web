@@ -1,0 +1,23 @@
+global
+    daemon
+    maxconn 4096
+
+defaults
+    mode tcp
+    timeout connect 5s
+    timeout client 30s
+    timeout server 30s
+
+frontend fe_main
+    bind *:${PUBLIC_PORT}
+    tcp-request inspect-delay 3s
+    # Проверяем первый байт: G/P/H/O/D/C = HTTP, иначе MTProto
+    acl is_http req.payload(0,1) -m str G P H O D C
+    use_backend web if is_http
+    default_backend mtproto
+
+backend mtproto
+    server tg1 tg-ws-proxy:8446 send-proxy-v2
+
+backend web
+    server web1 web:80

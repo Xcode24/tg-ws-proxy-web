@@ -1,0 +1,22 @@
+events {
+    worker_connections 1024;
+}
+
+stream {
+    upstream mtproto_backend {
+        server tg-ws-proxy:8446;
+    }
+
+    map $ssl_preread_server_name $upstream_pool {
+        hostnames;
+        ${DOMAIN} mtproto_backend;
+        default mtproto_backend;
+    }
+
+    server {
+        listen 9443;
+        proxy_pass $upstream_pool;
+        ssl_preread on;
+        proxy_protocol on;
+    }
+}
